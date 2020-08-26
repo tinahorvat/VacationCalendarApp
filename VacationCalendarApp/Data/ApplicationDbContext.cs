@@ -17,5 +17,9 @@ namespace VacationCalendarApp.Data
             IOptions<OperationalStoreOptions> operationalStoreOptions) : base(options, operationalStoreOptions)
         {
         }
+
+        public DbSet<VacationCalendarApp.Models.Vacation> Vacation { get; set; }
+
+        public DbSet<VacationCalendarApp.Models.Employee> Employee { get; set; }
     }
 }

@@ -30,7 +30,7 @@ namespace VacationCalendarApp
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
+            services.AddIdentity<ApplicationUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = false)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
             services.AddIdentityServer()
@@ -38,6 +38,11 @@ namespace VacationCalendarApp
 
             services.AddAuthentication()
                 .AddIdentityServerJwt();
+
+            //services.AddAuthorization(options =>
+            //    options.AddPolicy("Admin", policy =>
+            //    policy.RequireAuthenticatedUser()
+            //    .RequireClaim("IsAdmin", bool.TrueString)));
 
             services.AddControllersWithViews();
             services.AddRazorPages();

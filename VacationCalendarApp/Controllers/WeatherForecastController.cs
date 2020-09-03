@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
 namespace VacationCalendarApp.Controllers
-{
+{    
     [Authorize]
     [ApiController]
     [Route("[controller]")]
@@ -25,6 +25,7 @@ namespace VacationCalendarApp.Controllers
             _logger = logger;
         }
 
+        [Authorize(Roles ="Admin")]
         [HttpGet]
         public IEnumerable<WeatherForecast> Get()
         {

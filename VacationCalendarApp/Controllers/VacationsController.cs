@@ -2,46 +2,53 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VacationCalendarApp.Data;
+using VacationCalendarApp.Dto;
 using VacationCalendarApp.Models;
 
 namespace VacationCalendarApp.Controllers
 {
-    [Authorize]
+    
     [Route("api/[controller]")]
     [ApiController]
     public class VacationsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
 
-        public VacationsController(ApplicationDbContext context)
+        public VacationsController(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         // GET: api/Vacations
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Vacation>>> GetVacations()
         {
-            return await _context.Vacation.ToListAsync();
+            var vacations = await _context.Vacation.Include(c=> c.Employee).ToListAsync();
+            var vacationsData = _mapper.Map<IEnumerable<Vacation>, IEnumerable<VacationData>>(vacations);
+            return Ok(vacationsData);
         }
 
         // GET: api/Vacations/5
+        [Authorize(Roles = "Admin")]
         [HttpGet("{id}")]
         public async Task<ActionResult<Vacation>> GetVacation(int id)
         {
-            var vacation = await _context.Vacation.FindAsync(id);
-
+            var vacation = await _context.Vacation.Include(c => c.Employee).FirstOrDefaultAsync(c=> c.Id == id);
+            var vacationData = _mapper.Map<Vacation, VacationData>(vacation);
             if (vacation == null)
             {
                 return NotFound();
             }
 
-            return vacation;
+            return Ok(vacationData);
         }
 
         // PUT: api/Vacations/5
@@ -90,6 +97,7 @@ namespace VacationCalendarApp.Controllers
         // POST: api/Vacations
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
+        [Authorize(Roles ="Admin")]
         [HttpPost]
         public async Task<ActionResult<Vacation>> PostVacation(Vacation vacation)
         {

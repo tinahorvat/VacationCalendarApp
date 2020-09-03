@@ -11,6 +11,13 @@ using VacationCalendarApp.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using IdentityModel;
+using System.Linq;
+using AutoMapper;
 
 namespace VacationCalendarApp
 {
@@ -30,19 +37,64 @@ namespace VacationCalendarApp
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
 
+            //services.Configure<IdentityOptions>(options =>
+            //{
+            //    options.ClaimsIdentity.RoleClaimType = JwtClaimTypes.Role;
+                
+            //});
+
             services.AddIdentity<ApplicationUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = false)
-                .AddEntityFrameworkStores<ApplicationDbContext>();
+                .AddDefaultUI()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+
+                .AddDefaultTokenProviders();
+
+            
 
             services.AddIdentityServer()
-                .AddApiAuthorization<ApplicationUser, ApplicationDbContext>();
+                .AddApiAuthorization<ApplicationUser, ApplicationDbContext>(options => {
+                    options.IdentityResources["openid"].UserClaims.Add("role");
+                    options.ApiResources.Single().UserClaims.Add("role");
+                });
+            //JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Remove("role");
 
-            services.AddAuthentication()
-                .AddIdentityServerJwt();
+            services.AddAuthorization()
+                .AddAuthentication()
+                .AddIdentityServerJwt()
+                .AddJwtBearer();
+
+            //services.AddAuthentication(o =>
+            //    {
+            //        o.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            //    })
+            //    .AddJwtBearer(o =>
+            //    {
+            //        //Additional config snipped
+            //        o.Events = new JwtBearerEvents
+            //        {
+            //            OnTokenValidated = async ctx =>
+            //            {
+            //                //Get the calling app client id that came from the token produced by Azure AD
+            //                string clientId = ctx.Principal.FindFirstValue("appid");
+
+            //                //Add claim if yes
+            //                var claims = new List<Claim> { new Claim("IsAdmin  ", "true") };
+            //                var appIdentity = new ClaimsIdentity(claims);
+
+            //                ctx.Principal.AddIdentity(appIdentity);
+
+            //            }
+            //        };
+            //    }).AddIdentityServerJwt();
+
 
             //services.AddAuthorization(options =>
             //    options.AddPolicy("Admin", policy =>
             //    policy.RequireAuthenticatedUser()
-            //    .RequireClaim("IsAdmin", bool.TrueString)));
+            //    .RequireClaim("role", "Admin")));
+
+            //services.AddHttpContextAccessor();
+            services.AddAutoMapper(typeof(Startup));
 
             services.AddControllersWithViews();
             services.AddRazorPages();

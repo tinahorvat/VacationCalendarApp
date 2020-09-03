@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace VacationCalendarApp.Controllers
 {
@@ -23,4 +26,5 @@ namespace VacationCalendarApp.Controllers
             return Ok(parameters);
         }
     }
+
 }

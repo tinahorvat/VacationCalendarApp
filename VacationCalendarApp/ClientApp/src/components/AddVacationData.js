@@ -1,52 +1,56 @@
 ﻿import React, { Component } from 'react';
 import authService from './api-authorization/AuthorizeService'
-import { VacationType } from './small/VacationType'
 
-export class EditVacationData extends Component {
-    static displayName = EditVacationData.name;
+export class AddVacationData extends Component {
+    static displayName = AddVacationData.name;
 
     constructor(props) {
         super(props);
         this.state = {
-            vacationId: this.props.match.params.id,
+            employeeId: this.props.match.params.id, 
             vacation:
             {
-
-            }, loading: true,
-            errorMessage : null
+                employeeId: this.props.employeeId,
+                employeeName: this.props.employeeFullName,
+                dateFrom: null,
+                dateTo: null,
+                vacationType : null
+            },
+            errorMessage: null
         };
-        this.handleInputChange = this.handleInputChange.bind(this);
-        this.handleDropDownChange = this.handleDropDownChange.bind(this);
+        this.handleDateFromChange = this.handleDateFromChange.bind(this);
+        this.handleDateToChange = this.handleDateToChange.bind(this);
+        this.handleVacationTypeChange = this.handleVacationTypeChange.bind(this);
         this.handleFormSubmit = this.handleFormSubmit.bind(this);
     }
 
-    handleInputChange(e) {
+    handleDateFromChange(e) {
         this.setState({
             ...this.state,
-            vacation: { ...this.state.vacation, [e.target.name]: e.target.value },
+            vacation: { ...this.state.vacation, dateFrom: e.target.value },
         })
     };
 
-    handleDropDownChange(e) {
+    handleDateToChange(e) {
+        this.setState({
+            ...this.state,
+            vacation: { ...this.state.vacation, dateTo: e.target.value },
+        })
+    };
+
+    handleVacationTypeChange(e) {
         this.setState({
             ...this.state,
             vacation: { ...this.state.vacation, vacationType: e.target.value },
         })
-        //const target = event.target;
-        //const value = target.type === 'checkbox' ? target.checked : target.value;
-        //const name = target.name;
-
-        //this.setState({
-        //    [name]: value
-        //});
-    } 
+    };
 
     async handleFormSubmit(e) {
         e.preventDefault();
         const token = await authService.getAccessToken();
 
-        await fetch("/api/vacations/" + this.state.vacationId, {
-            method: "PUT",
+        await fetch("/api/vacations/", {
+            method: "POST",
             body: JSON.stringify(this.state.vacation),
             headers: new Headers({
                 "Content-Type": "application/json",
@@ -56,12 +60,12 @@ export class EditVacationData extends Component {
             .then((response) => {
                 if (response.ok) {
                     this.props.history.push("/"); //TODO: navigate to calendar
-                }                
+                }
                 if (response.status === 403 || response.status === 400) { alert(response.statusText) }
                 return response;
             })
             .catch(error => alert("Something went wrong"))
-    }      
+    }
 
     componentDidMount() {
         this.populateVacationData();
@@ -77,14 +81,15 @@ export class EditVacationData extends Component {
                     </div>
                     <div className="row">
                         <label className="col-50" htmlFor="dateFrom">Date from</label>
-                        <input type="text" name="dateFrom" value={vacation.dateFrom} onChange={(e) => this.handleInputChange(e)} />
+                        <input type="text" name="dateFrom" value={vacation.dateFrom} onChange={(e) => this.handleDateFromChange(e)} />
                     </div>
                     <div className="row">
                         <label className="col-50" htmlFor="dateTo">Date to</label>
-                        <input type="text" name="dateTo" value={vacation.dateTo} onChange={(e) => this.handleInputChange(e)} />
-                    </div>                    
+                        <input type="text" name="dateTo" value={vacation.dateTo} onChange={(e) => this.handleDateToChange(e)} />
+                    </div>
                     <div className="row">
-                        <VacationType name="vacationType" selected={vacation.vacationType} vacationTypeChoices={vacation.vacationTypeChoices} onOptionChange={this.handleDropDownChange} />
+                        <label className="col-50" htmlFor="vacationType">Vacation type</label>
+                        <input type="text" name="vacationType" value={vacation.vacationType} onChange={(e) => this.handleVacationTypeChange(e)} />
                     </div>
                     <div className="row">
                         <input type="submit" value="Submit vacation" />
@@ -101,30 +106,28 @@ export class EditVacationData extends Component {
 
         return (
             <div>
-                <h1 id="tabelLabel" >Edit employees vacations : </h1>
+                <h1 id="tabelLabel" >Add vacation : </h1>
 
                 {contents}
             </div>
         );
     }
 
-
     async populateVacationData() {
-        const token = await authService.getAccessToken();        
-        await fetch('api/vacations/' + this.state.vacationId, {
+        const token = await authService.getAccessToken();
+        await fetch('api/vacations/', {
             headers: !token ? {} : { 'Authorization': `Bearer ${token}` }
         })
             .then(response => {
-            if (response.ok) {
-                return response.json()
-            }
-            if (response.status === 403) {
-                this.setState({ errorMessage: "You are not authorized!", loading: false })
-            }
+                if (response.ok) {
+                    return response.json()
+                }
+                if (response.status === 403) {
+                    this.setState({ errorMessage: "You are not authorized!", loading: false })
+                }
             })
             .then(data => this.setState({ vacation: data || [], loading: false }))
-            .catch(error => this.setState({ errorMessage: error, loading: false }));        
+            .catch(error => this.setState({ errorMessage: error, loading: false }));
     }
-
 
 }

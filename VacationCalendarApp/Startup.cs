@@ -19,6 +19,7 @@ using IdentityModel;
 using System.Linq;
 using AutoMapper;
 
+
 namespace VacationCalendarApp
 {
     public class Startup
@@ -94,7 +95,13 @@ namespace VacationCalendarApp
             //    .RequireClaim("role", "Admin")));
 
             //services.AddHttpContextAccessor();
-            services.AddAutoMapper(typeof(Startup));
+            //var mapperConfig = new MapperConfiguration(mc =>
+            //{
+            //    mc.AddProfile(new MappingProfile());
+            //});
+
+            //IMapper mapper = mapperConfig.CreateMapper();
+            //services.AddSingleton(mapper);
 
             services.AddControllersWithViews();
             services.AddRazorPages();

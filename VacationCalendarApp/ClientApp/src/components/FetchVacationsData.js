@@ -21,7 +21,7 @@ export class FetchVacationsData extends Component {
                 <thead>
                     <tr>
                         <th>Employee</th>
-                        <th>Vacation id</th>
+                        <th>Vacation</th>
                         <th>Date start</th>
                         <th>Date end</th>
                         <th>Type</th>
@@ -30,9 +30,11 @@ export class FetchVacationsData extends Component {
                 <tbody>
                     {vacations.map(vacation =>
                         <tr key={vacation.id}>
-                            <td>{vacation.employeeFullName}</td>
+                            <td>{vacation.employeeFullName}
+                                <NavLink tag={Link} className="text-dark" to={`add-vacation-data/${vacation.employeeId}`}>Add vacation for this employee</NavLink>
+                            </td>
                             <td>
-                                <NavLink tag={Link} className="text-dark" to={`edit-vacation-data/${vacation.id}`}>{vacation.id}</NavLink></td>
+                                <NavLink tag={Link} className="text-dark" to={`edit-vacation-data/${vacation.id}`}>Edit/delete this vacation{vacation.id}</NavLink></td>
                             <td>{vacation.dateFrom}</td>
                             <td>{vacation.dateTo}</td>                            
                             <td>{vacation.vacationType}</td>

@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VacationCalendarApp.Data;
 using VacationCalendarApp.Dto;
+using VacationCalendarApp.Extensions;
 using VacationCalendarApp.Models;
 
 namespace VacationCalendarApp.Controllers
@@ -19,12 +19,17 @@ namespace VacationCalendarApp.Controllers
     public class VacationsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly IMapper _mapper;
+        //private readonly IMapper _mapper;
 
-        public VacationsController(ApplicationDbContext context, IMapper mapper)
+        //public VacationsController(ApplicationDbContext context, IMapper mapper)
+        //{
+        //    _context = context;
+        //    _mapper = mapper;
+        //}
+        public VacationsController(ApplicationDbContext context)
         {
             _context = context;
-            _mapper = mapper;
+           
         }
 
         // GET: api/Vacations
@@ -32,23 +37,76 @@ namespace VacationCalendarApp.Controllers
         public async Task<ActionResult<IEnumerable<Vacation>>> GetVacations()
         {
             var vacations = await _context.Vacation.Include(c=> c.Employee).ToListAsync();
-            var vacationsData = _mapper.Map<IEnumerable<Vacation>, IEnumerable<VacationData>>(vacations);
+            var vacationsData = new List<VacationData>();
+            foreach (var v in vacations)
+            {
+                vacationsData.Add(new VacationData()
+                {
+                    Id = v.Id,
+                    DateFrom = v.DateFrom,
+                    DateTo = v.DateTo,
+                    EmployeeFirstName = v.Employee.FirstName,
+                    EmployeeLastName = v.Employee.LastName,
+                    VacationType = v.VacationType
+                });
+            }
             return Ok(vacationsData);
+            //var vacationsData = _mapper.Map<IEnumerable<Vacation>, IEnumerable<VacationData>>(vacations);
+            //return Ok(vacationsData);
         }
 
         // GET: api/Vacations/5
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         [HttpGet("{id}")]
         public async Task<ActionResult<Vacation>> GetVacation(int id)
         {
-            var vacation = await _context.Vacation.Include(c => c.Employee).FirstOrDefaultAsync(c=> c.Id == id);
-            var vacationData = _mapper.Map<Vacation, VacationData>(vacation);
-            if (vacation == null)
+            var v = await _context.Vacation.Include(c => c.Employee).FirstOrDefaultAsync(c => c.Id == id);
+            var vacationData = new VacationData()
+            {
+                Id = v.Id,
+                DateFrom = v.DateFrom,
+                DateTo = v.DateTo,
+                EmployeeId = v.Employee.Id,
+                EmployeeFirstName = v.Employee.FirstName,
+                EmployeeLastName = v.Employee.LastName,
+                VacationType = v.VacationType
+            };
+            vacationData.VacationTypeChoices = GetVacationTypeChoices().ToList();
+            if (v == null)
             {
                 return NotFound();
             }
 
             return Ok(vacationData);
+
+            //var vacation = await _context.Vacation.Include(c => c.Employee).FirstOrDefaultAsync(c=> c.Id == id);
+            //var vacationData = _mapper.Map<Vacation, VacationData>(vacation);
+            //vacationData.VacationTypeChoices = GetVacationTypeChoices().ToList();
+            //if (vacation == null)
+            //{
+            //    return NotFound();
+            //}
+
+            //return Ok(vacationData);
+        }
+
+        [HttpGet("GetVacationTypes")]
+        public  ActionResult<VacationTypeChoice> GetVacationTypes()
+        {
+            return Ok(GetVacationTypeChoices());
+            //var vacationTypes = EnumService<VacationTypes>.GetDescriptionValuePairs();
+            //IEnumerable<VacationTypeChoice> choices = vacationTypes.Select(c => new VacationTypeChoice() { Value = c.Key.ToString(), Text = c.Value });
+            //return Ok(choices);
+        }
+
+        private IEnumerable<VacationTypeChoice> GetVacationTypeChoices()
+        {
+            return new List<VacationTypeChoice>()
+            {
+                new VacationTypeChoice { Value="Vacation", Text="Vacation Leave" },
+                new VacationTypeChoice { Value="Sick", Text="Sick Leave" },
+                new VacationTypeChoice { Value="Holiday", Text="Holiday" },
+            };
         }
 
         // PUT: api/Vacations/5
@@ -63,7 +121,7 @@ namespace VacationCalendarApp.Controllers
             }
 
             if (!ValidateDates(vacation.DateFrom, vacation.DateTo))
-                return Problem("Start date is beyond end date");
+                return ValidationProblem("Start date is beyond end date"); 
 
             if (!await VacationOverLap(vacation.EmployeeId, vacation.DateFrom, vacation.DateTo, id))
             {
@@ -90,7 +148,7 @@ namespace VacationCalendarApp.Controllers
 
             else
             {
-                return Problem("Vacation dates overlap with existing vacation for the employee");
+                return ValidationProblem("Vacation dates overlap with existing vacation for the employee");
             }
         }
 
@@ -102,7 +160,7 @@ namespace VacationCalendarApp.Controllers
         public async Task<ActionResult<Vacation>> PostVacation(Vacation vacation)
         {
             if (!ValidateDates(vacation.DateFrom, vacation.DateTo))
-                return Problem("Start date is beyond end date");
+                return ValidationProblem("Start date is beyond end date");
 
             if (!await VacationOverLap(vacation.EmployeeId, vacation.DateFrom, vacation.DateTo))
             {
@@ -113,7 +171,7 @@ namespace VacationCalendarApp.Controllers
             }
             else
             {
-                return Problem("Vacation dates overlap with existing vacation for the employee");
+                return ValidationProblem("Vacation dates overlap with existing vacation for the employee");
             }
         }
 

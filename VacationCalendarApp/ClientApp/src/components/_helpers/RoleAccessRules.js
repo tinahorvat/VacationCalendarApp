@@ -5,12 +5,19 @@
     Employee: {
         static: [
             "vacations:list",
-            "vacations:create",
             "users:getSelf",
             "home-page:visit",
         ],
         dynamic: {
+            "vacations:create": ({ userId, vacationOwnerId }) => {
+                if (!userId || !vacationOwnerId) return false;
+                return userId === vacationOwnerId;
+            },
             "vacations:edit": ({ userId, vacationOwnerId }) => {
+                if (!userId || !vacationOwnerId) return false;
+                return userId === vacationOwnerId;
+            },
+            "vacations:delete": ({ userId, vacationOwnerId }) => {
                 if (!userId || !vacationOwnerId) return false;
                 return userId === vacationOwnerId;
             }

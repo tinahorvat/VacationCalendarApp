@@ -18,6 +18,16 @@ namespace VacationCalendarApp.Data
         {
         }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            var employeeUserEtb = modelBuilder.Entity<EmployeeUser>();
+            employeeUserEtb.HasKey(eu => new { eu.EmployeeId, eu.ApplicationUserId });
+            employeeUserEtb.HasIndex(eu => eu.EmployeeId).IsUnique();
+            employeeUserEtb.HasIndex(eu => eu.ApplicationUserId).IsUnique();
+        }
+
         public DbSet<VacationCalendarApp.Models.Vacation> Vacation { get; set; }
 
         public DbSet<VacationCalendarApp.Models.Employee> Employee { get; set; }

@@ -16,8 +16,15 @@ namespace VacationCalendarApp.Models
 
         public ICollection<Vacation> Vacations { get; set; }
 
-        //public ApplicationUser User { get; set; }
+        public EmployeeUser EmployeeUser { get; set; }
     }
 
-    
+    public class EmployeeUser
+    {
+        public int EmployeeId { get; set; }
+        public Employee Employee { get; set; }
+
+        public string ApplicationUserId { get; set; }
+        public ApplicationUser ApplicationUser { get; set; }
+    }
 }

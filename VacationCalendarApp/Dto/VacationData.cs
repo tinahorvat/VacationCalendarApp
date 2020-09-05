@@ -27,6 +27,8 @@ namespace VacationCalendarApp.Dto
         [Required]
         public int EmployeeId { get; set; }
 
+        public string UserName { get; set; }
+
         public List<VacationTypeChoice> VacationTypeChoices { get; set; }
     }
 

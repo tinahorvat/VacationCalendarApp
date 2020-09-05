@@ -39,12 +39,15 @@ export class FetchVacationsData extends Component {
                                 <AccessAllowed
                                     role={user.role}
                                     perform="vacations:create"
+                                    data={{
+                                        userId: user.id,
+                                        vacationOwnerId: vacation.userName
+                                    }}
                                     yes={() => (
                                         <div>
                                             <NavLink tag={Link} className="text-dark" to={`create-vacation-data/${vacation.employeeId}`}>Create vacation for this employee</NavLink>
                                         </div>
-                                    )}
-                                    
+                                    )}                                    
                                 />
                                 
                             </td>
@@ -54,7 +57,7 @@ export class FetchVacationsData extends Component {
                                     perform="vacations:edit"
                                     data={{
                                         userId: user.id,
-                                        vacationOwnerId: user.id
+                                        vacationOwnerId: vacation.userName
                                     }}
                                     yes={() => (
                                         <div>

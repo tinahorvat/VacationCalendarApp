@@ -1,5 +1,6 @@
 ﻿import React, { Component } from 'react';
 import authService from './api-authorization/AuthorizeService'
+import { VacationType } from './small/VacationType'
 
 export class CreateVacationData extends Component {
     static displayName = CreateVacationData.name;
@@ -14,34 +15,19 @@ export class CreateVacationData extends Component {
                 employeeName: this.props.employeeFullName,
                 dateFrom: null,
                 dateTo: null,
-                vacationType : null
+                vacationType: null,
+                vacationTypeChoices : []
             },
             errorMessage: null
         };
-        this.handleDateFromChange = this.handleDateFromChange.bind(this);
-        this.handleDateToChange = this.handleDateToChange.bind(this);
-        this.handleVacationTypeChange = this.handleVacationTypeChange.bind(this);
+        this.handleInputChange = this.handleInputChange.bind(this);        
         this.handleFormSubmit = this.handleFormSubmit.bind(this);
     }
 
-    handleDateFromChange(e) {
+    handleInputChange(e) {
         this.setState({
             ...this.state,
-            vacation: { ...this.state.vacation, dateFrom: e.target.value },
-        })
-    };
-
-    handleDateToChange(e) {
-        this.setState({
-            ...this.state,
-            vacation: { ...this.state.vacation, dateTo: e.target.value },
-        })
-    };
-
-    handleVacationTypeChange(e) {
-        this.setState({
-            ...this.state,
-            vacation: { ...this.state.vacation, vacationType: e.target.value },
+            vacation: { ...this.state.vacation, [e.target.name]: e.target.value },
         })
     };
 
@@ -49,7 +35,7 @@ export class CreateVacationData extends Component {
         e.preventDefault();
         const token = await authService.getAccessToken();
 
-        await fetch("/api/vacations/", {
+        await fetch("/api/vacations", {
             method: "POST",
             body: JSON.stringify(this.state.vacation),
             headers: new Headers({
@@ -81,15 +67,14 @@ export class CreateVacationData extends Component {
                     </div>
                     <div className="row">
                         <label className="col-50" htmlFor="dateFrom">Date from</label>
-                        <input type="text" name="dateFrom" value={vacation.dateFrom} onChange={(e) => this.handleDateFromChange(e)} />
+                        <input type="text" name="dateFrom" value={vacation.dateFrom} onChange={(e) => this.handleInputChange(e)} />
                     </div>
                     <div className="row">
                         <label className="col-50" htmlFor="dateTo">Date to</label>
-                        <input type="text" name="dateTo" value={vacation.dateTo} onChange={(e) => this.handleDateToChange(e)} />
+                        <input type="text" name="dateTo" value={vacation.dateTo} onChange={(e) => this.handleInputChange(e)} />
                     </div>
-                    <div className="row">
-                        <label className="col-50" htmlFor="vacationType">Vacation type</label>
-                        <input type="text" name="vacationType" value={vacation.vacationType} onChange={(e) => this.handleVacationTypeChange(e)} />
+                    <div className="row">                        
+                        <VacationType name="vacationType" selected={vacation.vacationType} vacationTypeChoices={vacation.vacationTypeChoices} onOptionChange={this.handleInputChange} />
                     </div>
                     <div className="row">
                         <input type="submit" value="Submit vacation" />
@@ -115,7 +100,7 @@ export class CreateVacationData extends Component {
 
     async populateVacationData() {
         const token = await authService.getAccessToken();
-        await fetch('api/vacations/', {
+        await fetch('api/vacations/GetCreateValues/' + this.state.employeeId, {
             headers: !token ? {} : { 'Authorization': `Bearer ${token}` }
         })
             .then(response => {

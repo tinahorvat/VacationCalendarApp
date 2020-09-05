@@ -10,6 +10,6 @@ namespace VacationCalendarApp.Models
 {
     public class ApplicationUser : IdentityUser
     {
-        //public Employee Employee { get; set; }
+        public EmployeeUser EmployeeUser { get; set; }
     }
 }

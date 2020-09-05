@@ -34,9 +34,10 @@ namespace VacationCalendarApp.Controllers
 
         // GET: api/Vacations
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Vacation>>> GetVacations()
+        public async Task<ActionResult<IEnumerable<VacationData>>> GetVacations()
         {
-            var vacations = await _context.Vacation.Include(c=> c.Employee).ToListAsync();
+            var vacations = await _context.Vacation.Include(c=> c.Employee).ThenInclude(u => u.EmployeeUser!).ThenInclude(a=>a.ApplicationUser).ToListAsync();
+            
             var vacationsData = new List<VacationData>();
             foreach (var v in vacations)
             {
@@ -45,12 +46,15 @@ namespace VacationCalendarApp.Controllers
                     Id = v.Id,
                     DateFrom = v.DateFrom,
                     DateTo = v.DateTo,
+                    EmployeeId = v.EmployeeId,
                     EmployeeFirstName = v.Employee.FirstName,
                     EmployeeLastName = v.Employee.LastName,
+                    UserName = v.Employee.EmployeeUser?.ApplicationUser.UserName,
                     VacationType = v.VacationType
                 });
             }
             return Ok(vacationsData);
+            //would use Automapper bu gettin identityServer error
             //var vacationsData = _mapper.Map<IEnumerable<Vacation>, IEnumerable<VacationData>>(vacations);
             //return Ok(vacationsData);
         }
@@ -58,7 +62,7 @@ namespace VacationCalendarApp.Controllers
         // GET: api/Vacations/5
         //[Authorize(Roles = "Admin")]
         [HttpGet("{id}")]
-        public async Task<ActionResult<Vacation>> GetVacation(int id)
+        public async Task<ActionResult<VacationData>> GetVacation(int id)
         {
             var v = await _context.Vacation.Include(c => c.Employee).FirstOrDefaultAsync(c => c.Id == id);
             var vacationData = new VacationData()
@@ -90,6 +94,19 @@ namespace VacationCalendarApp.Controllers
             //return Ok(vacationData);
         }
 
+        [HttpGet("GetCreateValues/{id}")]
+        public async Task<ActionResult<VacationData>> GetCreateValues(int id)
+        {
+            var vacation = new VacationData();
+            var employee = await _context.Employee.FindAsync(id);
+            vacation.EmployeeId = employee.Id;
+            vacation.EmployeeFirstName = employee.FirstName;
+            vacation.EmployeeLastName = employee.LastName;
+            vacation.VacationTypeChoices = GetVacationTypeChoices().ToList();
+
+            return Ok(vacation);
+        }
+
         [HttpGet("GetVacationTypes")]
         public  ActionResult<VacationTypeChoice> GetVacationTypes()
         {
@@ -112,8 +129,9 @@ namespace VacationCalendarApp.Controllers
         // PUT: api/Vacations/5
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
+        [Authorize(Roles = "Admin, Employee")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutVacation(int id, Vacation vacation)
+        public async Task<IActionResult> PutVacation(int id, VacationData vacation)
         {
             if (id != vacation.Id)
             {
@@ -125,7 +143,11 @@ namespace VacationCalendarApp.Controllers
 
             if (!await VacationOverLap(vacation.EmployeeId, vacation.DateFrom, vacation.DateTo, id))
             {
-                _context.Entry(vacation).State = EntityState.Modified;
+                var vacationEntry = await _context.Vacation.FindAsync(id);
+                vacationEntry.DateFrom = vacation.DateFrom;
+                vacationEntry.DateTo = vacation.DateTo;
+                vacationEntry.VacationType = vacation.VacationType;
+                //_context.Entry(vacation).State = EntityState.Modified;
 
                 try
                 {
@@ -155,19 +177,21 @@ namespace VacationCalendarApp.Controllers
         // POST: api/Vacations
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
-        [Authorize(Roles ="Admin")]
+        [Authorize(Roles ="Admin, Employee")]
         [HttpPost]
-        public async Task<ActionResult<Vacation>> PostVacation(Vacation vacation)
+        public async Task<ActionResult<VacationData>> PostVacation(VacationData vacation)
         {
             if (!ValidateDates(vacation.DateFrom, vacation.DateTo))
                 return ValidationProblem("Start date is beyond end date");
 
             if (!await VacationOverLap(vacation.EmployeeId, vacation.DateFrom, vacation.DateTo))
             {
-                _context.Vacation.Add(vacation);
+                Employee e = await _context.Employee.FindAsync(vacation.EmployeeId);
+                Vacation newVacation = new Vacation() { Employee = e, DateFrom = vacation.DateFrom, DateTo = vacation.DateTo, VacationType = vacation.VacationType };
+                _context.Vacation.Add(newVacation);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetVacation), new { id = vacation.Id }, vacation);
+                return CreatedAtAction(nameof(GetVacations), new { id = newVacation.Id }, vacation);
             }
             else
             {
@@ -176,6 +200,7 @@ namespace VacationCalendarApp.Controllers
         }
 
         // DELETE: api/Vacations/5
+        [Authorize(Roles = "Admin, Employee")]
         [HttpDelete("{id}")]
         public async Task<ActionResult<Vacation>> DeleteVacation(int id)
         {

@@ -1,8 +1,8 @@
 ﻿import React, { Component } from 'react';
 import authService from './api-authorization/AuthorizeService'
 
-export class AddVacationData extends Component {
-    static displayName = AddVacationData.name;
+export class CreateVacationData extends Component {
+    static displayName = CreateVacationData.name;
 
     constructor(props) {
         super(props);

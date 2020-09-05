@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import authService from './api-authorization/AuthorizeService';
 import { Collapse, Container, Navbar, NavbarBrand, NavbarToggler, NavItem, NavLink } from 'reactstrap';
 import { Link } from 'react-router-dom';
 import { LoginMenu } from './api-authorization/LoginMenu';
@@ -12,7 +13,7 @@ export class NavMenu extends Component {
 
     this.toggleNavbar = this.toggleNavbar.bind(this);
     this.state = {
-      collapsed: true
+        collapsed: true,
     };
   }
 
@@ -20,7 +21,8 @@ export class NavMenu extends Component {
     this.setState({
       collapsed: !this.state.collapsed
     });
-  }
+    }
+
 
   render () {
     return (

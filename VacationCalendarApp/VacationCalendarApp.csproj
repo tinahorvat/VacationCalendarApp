@@ -33,7 +33,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="ClientApp\src\components\helpers\" />
     <Folder Include="Data\DataInitializer\" />
     <Folder Include="Mapping\" />
   </ItemGroup>

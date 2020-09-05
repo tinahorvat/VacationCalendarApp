@@ -13,10 +13,10 @@ export class EditVacationData extends Component {
             {
 
             }, loading: true,
-            errorMessage : null
+            errorMessage: null,
+            userRole : null
         };
-        this.handleInputChange = this.handleInputChange.bind(this);
-        this.handleDropDownChange = this.handleDropDownChange.bind(this);
+        this.handleInputChange = this.handleInputChange.bind(this);        
         this.handleFormSubmit = this.handleFormSubmit.bind(this);
     }
 
@@ -26,20 +26,6 @@ export class EditVacationData extends Component {
             vacation: { ...this.state.vacation, [e.target.name]: e.target.value },
         })
     };
-
-    handleDropDownChange(e) {
-        this.setState({
-            ...this.state,
-            vacation: { ...this.state.vacation, vacationType: e.target.value },
-        })
-        //const target = event.target;
-        //const value = target.type === 'checkbox' ? target.checked : target.value;
-        //const name = target.name;
-
-        //this.setState({
-        //    [name]: value
-        //});
-    } 
 
     async handleFormSubmit(e) {
         e.preventDefault();
@@ -84,7 +70,7 @@ export class EditVacationData extends Component {
                         <input type="text" name="dateTo" value={vacation.dateTo} onChange={(e) => this.handleInputChange(e)} />
                     </div>                    
                     <div className="row">
-                        <VacationType name="vacationType" selected={vacation.vacationType} vacationTypeChoices={vacation.vacationTypeChoices} onOptionChange={this.handleDropDownChange} />
+                        <VacationType name="vacationType" selected={vacation.vacationType} vacationTypeChoices={vacation.vacationTypeChoices} onOptionChange={this.handleInputChange} />
                     </div>
                     <div className="row">
                         <input type="submit" value="Submit vacation" />
@@ -110,7 +96,10 @@ export class EditVacationData extends Component {
 
 
     async populateVacationData() {
-        const token = await authService.getAccessToken();        
+        const token = await authService.getAccessToken();  
+        const user = await authService.getUser();
+        var role = user.role;
+        this.setState({ userRole : role });
         await fetch('api/vacations/' + this.state.vacationId, {
             headers: !token ? {} : { 'Authorization': `Bearer ${token}` }
         })

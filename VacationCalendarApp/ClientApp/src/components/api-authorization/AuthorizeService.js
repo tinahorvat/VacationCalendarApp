@@ -26,6 +26,7 @@ export class AuthorizeService {
         return user && user.profile;
     }
 
+
     async getAccessToken() {
         await this.ensureUserManagerInitialized();
         const user = await this.userManager.getUser();

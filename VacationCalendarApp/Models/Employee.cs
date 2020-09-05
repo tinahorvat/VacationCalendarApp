@@ -15,5 +15,9 @@ namespace VacationCalendarApp.Models
         public string LastName { get; set; }
 
         public ICollection<Vacation> Vacations { get; set; }
+
+        //public ApplicationUser User { get; set; }
     }
+
+    
 }

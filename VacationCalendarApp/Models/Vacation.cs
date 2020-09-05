@@ -16,10 +16,14 @@ namespace VacationCalendarApp.Models
         [Required] 
         public DateTime DateTo { get; set; }
 
+        [Required]
         public string VacationType { get; set; }
 
         public int EmployeeId { get; set; }
 
         public Employee Employee { get; set; }
+
+        [Timestamp]
+        public byte[] RowVersion { get; set; }
     }
 }

@@ -1,6 +1,9 @@
 ﻿import React, { Component } from 'react';
 import authService from './api-authorization/AuthorizeService'
 import { VacationType } from './small/VacationType'
+import DatePicker from "react-datepicker";
+
+import "react-datepicker/dist/react-datepicker.css";
 
 export class EditVacationData extends Component {
     static displayName = EditVacationData.name;
@@ -11,12 +14,16 @@ export class EditVacationData extends Component {
             vacationId: this.props.match.params.id,
             vacation:
             {
-
+               
             }, loading: true,
             errorMessage: null,
-            userRole : null
+            userRole: null,
+            parsedFrom: null,
+            parsedTo: null
         };
-        this.handleInputChange = this.handleInputChange.bind(this);        
+        this.handleInputChange = this.handleInputChange.bind(this);   
+        this.handleDateFromChange = this.handleDateFromChange.bind(this);
+        this.handleDateToChange = this.handleDateToChange.bind(this);
         this.handleFormSubmit = this.handleFormSubmit.bind(this);
     }
 
@@ -27,10 +34,31 @@ export class EditVacationData extends Component {
         })
     };
 
+    handleDateFromChange = dateFrom => {
+        this.setState({
+            ...this.state,
+            parsedFrom : dateFrom
+        })
+    };
+    handleDateToChange = date => {
+        this.setState({
+            ...this.state,
+            parsedTo: date
+        })
+    };
+
     async handleFormSubmit(e) {
         e.preventDefault();
         const token = await authService.getAccessToken();
-
+        const stringDateFrom = this.state.parsedFrom.toISOString();
+        const stringDateTo = this.state.parsedTo.toISOString();
+        this.setState(prevState => {
+            return { ...prevState, vacation: { ...prevState.vacation, dateFrom: stringDateFrom } }
+        })
+        this.setState(prevState => {
+            return { ...prevState, vacation: { ...prevState.vacation, dateTo: stringDateTo } }
+        })
+        
         await fetch("/api/vacations/" + this.state.vacationId, {
             method: "PUT",
             body: JSON.stringify(this.state.vacation),
@@ -51,9 +79,10 @@ export class EditVacationData extends Component {
 
     componentDidMount() {
         this.populateVacationData();
+        
     }
 
-    renderVacationForm(vacation) {
+    renderVacationForm(vacation, parsedFrom, parsedTo) {
         return (
             <div className="formContainer">
                 <form onSubmit={(e) => this.handleFormSubmit(e)}>
@@ -63,11 +92,13 @@ export class EditVacationData extends Component {
                     </div>
                     <div className="row">
                         <label className="col-50" htmlFor="dateFrom">Date from</label>
-                        <input type="text" name="dateFrom" value={vacation.dateFrom} onChange={(e) => this.handleInputChange(e)} />
+                        
+                        <DatePicker dateFormat="yyyy/MM/dd" selected={parsedFrom} onChange={this.handleDateFromChange} />
                     </div>
                     <div className="row">
                         <label className="col-50" htmlFor="dateTo">Date to</label>
-                        <input type="text" name="dateTo" value={vacation.dateTo} onChange={(e) => this.handleInputChange(e)} />
+
+                        <DatePicker dateFormat="yyyy/MM/dd" selected={parsedTo} onChange={this.handleDateToChange} />
                     </div>                    
                     <div className="row">
                         <VacationType name="vacationType" selected={vacation.vacationType} vacationTypeChoices={vacation.vacationTypeChoices} onOptionChange={this.handleInputChange} />
@@ -83,7 +114,7 @@ export class EditVacationData extends Component {
     render() {
         let contents = this.state.loading
             ? <p><em>Loading...</em></p>
-            : this.renderVacationForm(this.state.vacation);
+            : this.renderVacationForm(this.state.vacation, this.state.parsedFrom, this.state.parsedTo);
 
         return (
             <div>
@@ -112,7 +143,14 @@ export class EditVacationData extends Component {
             }
             })
             .then(data => this.setState({ vacation: data || [], loading: false }))
-            .catch(error => this.setState({ errorMessage: error, loading: false }));        
+            .catch(error => this.setState({ errorMessage: error, loading: false }));   
+
+        const parsedDateFrom = new Date(this.state.vacation.dateFrom);
+        const parsedDateTo = new Date(this.state.vacation.dateTo);
+        this.setState({ ...this.state, parsedFrom: parsedDateFrom });
+        this.setState({ ...this.state, parsedTo: parsedDateTo })
+        
+        
     }
 
 

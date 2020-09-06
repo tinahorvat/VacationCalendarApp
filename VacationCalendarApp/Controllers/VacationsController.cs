@@ -15,17 +15,13 @@ namespace VacationCalendarApp.Controllers
 {
     
     [Route("api/[controller]")]
+    [Authorize(Roles = "Admin, Employee")]
     [ApiController]
     public class VacationsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        //private readonly IMapper _mapper;
+        //private readonly IMapper _mapper; should use Automapper for mappings
 
-        //public VacationsController(ApplicationDbContext context, IMapper mapper)
-        //{
-        //    _context = context;
-        //    _mapper = mapper;
-        //}
         public VacationsController(ApplicationDbContext context)
         {
             _context = context;
@@ -33,6 +29,7 @@ namespace VacationCalendarApp.Controllers
         }
 
         // GET: api/Vacations
+        [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<VacationData>>> GetVacations()
         {
@@ -59,8 +56,31 @@ namespace VacationCalendarApp.Controllers
             //return Ok(vacationsData);
         }
 
-        // GET: api/Vacations/5
-        //[Authorize(Roles = "Admin")]
+        [HttpGet("GetEmployeesVacations")]
+        [AllowAnonymous]
+        public async Task<ActionResult<IEnumerable<EmployeeVacationData>>> GetEmployeesVacations()
+        {
+            var employees = await _context.Employee.Include(c => c.Vacations).Include(u => u.EmployeeUser!).ThenInclude(a => a.ApplicationUser).ToListAsync();
+
+            var employeesData = new List<EmployeeVacationData>();
+            foreach (var v in employees)
+            {
+                employeesData.Add(new EmployeeVacationData()
+                {
+                    EmployeeId = v.Id,
+                    EmployeeFirstName = v.FirstName,
+                    EmployeeLastName = v.LastName,
+                    UserName = v.EmployeeUser?.ApplicationUser.UserName,
+                    Vacations = v.Vacations.Select(c=> new VacationDto {  Id=c.Id, DateFrom=c.DateFrom, DateTo=c.DateTo, VacationType = c.VacationType }).ToList()
+                });
+            }
+            return Ok(employeesData);
+            //would use Automapper bu gettin identityServer error
+            //var vacationsData = _mapper.Map<IEnumerable<Vacation>, IEnumerable<VacationData>>(vacations);
+            //return Ok(vacationsData);
+        }
+
+        // GET: api/Vacations/5        
         [HttpGet("{id}")]
         public async Task<ActionResult<VacationData>> GetVacation(int id)
         {
@@ -83,15 +103,6 @@ namespace VacationCalendarApp.Controllers
 
             return Ok(vacationData);
 
-            //var vacation = await _context.Vacation.Include(c => c.Employee).FirstOrDefaultAsync(c=> c.Id == id);
-            //var vacationData = _mapper.Map<Vacation, VacationData>(vacation);
-            //vacationData.VacationTypeChoices = GetVacationTypeChoices().ToList();
-            //if (vacation == null)
-            //{
-            //    return NotFound();
-            //}
-
-            //return Ok(vacationData);
         }
 
         [HttpGet("GetCreateValues/{id}")]
@@ -128,8 +139,7 @@ namespace VacationCalendarApp.Controllers
 
         // PUT: api/Vacations/5
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
-        [Authorize(Roles = "Admin, Employee")]
+        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.        
         [HttpPut("{id}")]
         public async Task<IActionResult> PutVacation(int id, VacationData vacation)
         {
@@ -176,8 +186,7 @@ namespace VacationCalendarApp.Controllers
 
         // POST: api/Vacations
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
-        [Authorize(Roles ="Admin, Employee")]
+        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.        
         [HttpPost]
         public async Task<ActionResult<VacationData>> PostVacation(VacationData vacation)
         {
@@ -223,7 +232,14 @@ namespace VacationCalendarApp.Controllers
 
         private bool ValidateDates(DateTime datefrom, DateTime dateto) => (datefrom.Date <= dateto.Date);
 
-
+        /// <summary>
+        /// Check if vacation overlaps with another for the given employee
+        /// </summary>
+        /// <param name="employeeId"></param>
+        /// <param name="dateFrom"></param>
+        /// <param name="dateTo"></param>
+        /// <param name="editItemId">vacation id if editing, null when creating</param>
+        /// <returns></returns>
         private Task<bool> VacationOverLap(int employeeId, DateTime dateFrom, DateTime dateTo, int? editItemId = null)
         {
             var vacations = _context.Vacation.Where(c => (c.EmployeeId == employeeId) && c.Id != editItemId);

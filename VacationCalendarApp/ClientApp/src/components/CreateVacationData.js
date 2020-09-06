@@ -2,6 +2,10 @@
 import authService from './api-authorization/AuthorizeService'
 import { VacationType } from './small/VacationType'
 
+import DatePicker from "react-datepicker";
+
+import "react-datepicker/dist/react-datepicker.css";
+
 export class CreateVacationData extends Component {
     static displayName = CreateVacationData.name;
 
@@ -18,9 +22,13 @@ export class CreateVacationData extends Component {
                 vacationType: null,
                 vacationTypeChoices : []
             },
-            errorMessage: null
+            errorMessage: null,
+            parsedFrom: null,
+            parsedTo: null
         };
-        this.handleInputChange = this.handleInputChange.bind(this);        
+        this.handleInputChange = this.handleInputChange.bind(this);  
+        this.handleDateFromChange = this.handleDateFromChange.bind(this);
+        this.handleDateToChange = this.handleDateToChange.bind(this);
         this.handleFormSubmit = this.handleFormSubmit.bind(this);
     }
 
@@ -30,11 +38,29 @@ export class CreateVacationData extends Component {
             vacation: { ...this.state.vacation, [e.target.name]: e.target.value },
         })
     };
-
+    handleDateFromChange = dateFrom => {
+        this.setState({
+            ...this.state,
+            parsedFrom: dateFrom
+        })
+    };
+    handleDateToChange = date => {
+        this.setState({
+            ...this.state,
+            parsedTo: date
+        })
+    };
     async handleFormSubmit(e) {
         e.preventDefault();
         const token = await authService.getAccessToken();
-
+        const stringDateFrom = this.state.parsedFrom.toISOString();
+        const stringDateTo = this.state.parsedTo.toISOString();
+        this.setState(prevState => {
+            return { ...prevState, vacation: { ...prevState.vacation, dateFrom: stringDateFrom } }
+        })
+        this.setState(prevState => {
+            return { ...prevState, vacation: { ...prevState.vacation, dateTo: stringDateTo } }
+        })
         await fetch("/api/vacations", {
             method: "POST",
             body: JSON.stringify(this.state.vacation),
@@ -45,7 +71,7 @@ export class CreateVacationData extends Component {
         })
             .then((response) => {
                 if (response.ok) {
-                    this.props.history.push("/"); //TODO: navigate to calendar
+                    this.props.history.push("/fetch-data"); 
                 }
                 if (response.status === 403 || response.status === 400) { alert(response.statusText) }
                 return response;
@@ -57,7 +83,7 @@ export class CreateVacationData extends Component {
         this.populateVacationData();
     }
 
-    renderVacationForm(vacation) {
+    renderVacationForm(vacation, parsedFrom, parsedTo) {
         return (
             <div className="formContainer">
                 <form onSubmit={(e) => this.handleFormSubmit(e)}>
@@ -67,11 +93,11 @@ export class CreateVacationData extends Component {
                     </div>
                     <div className="row">
                         <label className="col-50" htmlFor="dateFrom">Date from</label>
-                        <input type="text" name="dateFrom" value={vacation.dateFrom} onChange={(e) => this.handleInputChange(e)} />
+                        <DatePicker dateFormat="yyyy/MM/dd" selected={parsedFrom} onChange={this.handleDateFromChange} />
                     </div>
                     <div className="row">
                         <label className="col-50" htmlFor="dateTo">Date to</label>
-                        <input type="text" name="dateTo" value={vacation.dateTo} onChange={(e) => this.handleInputChange(e)} />
+                        <DatePicker dateFormat="yyyy/MM/dd" selected={parsedTo} onChange={this.handleDateToChange} />
                     </div>
                     <div className="row">                        
                         <VacationType name="vacationType" selected={vacation.vacationType} vacationTypeChoices={vacation.vacationTypeChoices} onOptionChange={this.handleInputChange} />
@@ -87,12 +113,11 @@ export class CreateVacationData extends Component {
     render() {
         let contents = this.state.loading
             ? <p><em>Loading...</em></p>
-            : this.renderVacationForm(this.state.vacation);
+            : this.renderVacationForm(this.state.vacation, this.state.parsedFrom, this.state.parsedTo);
 
         return (
             <div>
                 <h1 id="tabelLabel" >Add vacation : </h1>
-
                 {contents}
             </div>
         );
@@ -113,6 +138,11 @@ export class CreateVacationData extends Component {
             })
             .then(data => this.setState({ vacation: data || [], loading: false }))
             .catch(error => this.setState({ errorMessage: error, loading: false }));
+
+        const parsedDateFrom = new Date(this.state.vacation.dateFrom);
+        const parsedDateTo = new Date(this.state.vacation.dateTo);
+        this.setState({ ...this.state, parsedFrom: parsedDateFrom });
+        this.setState({ ...this.state, parsedTo: parsedDateTo })   
     }
 
 }

@@ -3,6 +3,7 @@ import authService from './api-authorization/AuthorizeService'
 import { VacationType } from './small/VacationType'
 import DatePicker from "react-datepicker";
 
+
 import "react-datepicker/dist/react-datepicker.css";
 
 export class EditVacationData extends Component {
@@ -24,9 +25,10 @@ export class EditVacationData extends Component {
         this.handleInputChange = this.handleInputChange.bind(this);   
         this.handleDateFromChange = this.handleDateFromChange.bind(this);
         this.handleDateToChange = this.handleDateToChange.bind(this);
+        this.HandleDeleteAction = this.HandleDeleteAction.bind(this);   
         this.handleFormSubmit = this.handleFormSubmit.bind(this);
     }
-
+    
     handleInputChange(e) {
         this.setState({
             ...this.state,
@@ -66,16 +68,37 @@ export class EditVacationData extends Component {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
             })
+        })            
+            .then((response) => {
+                if (response.ok) {
+                    this.props.history.push("/fetch-data"); 
+                }                
+                if (response.status === 403 || response.status === 400) { alert("Validation" + response.details) }
+                return response;
+            })
+            .catch(error => alert("Something went wrong"))
+    }  
+
+    async HandleDeleteAction(e)
+    {     
+        e.preventDefault();
+        const token = await authService.getAccessToken();
+        await fetch("/api/vacations/" + this.state.vacationId, {
+            method: "DELETE",            
+            headers: new Headers({
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            })
         })
             .then((response) => {
                 if (response.ok) {
-                    this.props.history.push("/"); //TODO: navigate to calendar
-                }                
+                    this.props.history.push("/fetch-data"); //TODO: navigate to calendar
+                }
                 if (response.status === 403 || response.status === 400) { alert(response.statusText) }
                 return response;
             })
             .catch(error => alert("Something went wrong"))
-    }      
+    }
 
     componentDidMount() {
         this.populateVacationData();
@@ -91,13 +114,11 @@ export class EditVacationData extends Component {
                         <input type="text" name="employee" defaultValue={vacation.employeeFullName} />
                     </div>
                     <div className="row">
-                        <label className="col-50" htmlFor="dateFrom">Date from</label>
-                        
+                        <label className="col-50" htmlFor="dateFrom">Date from</label>                        
                         <DatePicker dateFormat="yyyy/MM/dd" selected={parsedFrom} onChange={this.handleDateFromChange} />
                     </div>
                     <div className="row">
                         <label className="col-50" htmlFor="dateTo">Date to</label>
-
                         <DatePicker dateFormat="yyyy/MM/dd" selected={parsedTo} onChange={this.handleDateToChange} />
                     </div>                    
                     <div className="row">
@@ -107,6 +128,9 @@ export class EditVacationData extends Component {
                         <input type="submit" value="Submit vacation" />
                     </div>
                 </form>
+                <button type="button" onClick={this.HandleDeleteAction}>
+                    Delete
+          </button>
             </div>
         );
     }
@@ -118,8 +142,7 @@ export class EditVacationData extends Component {
 
         return (
             <div>
-                <h1 id="tabelLabel" >Edit employees vacations : </h1>
-
+                <h1 id="tabelLabel" >Edit vacation : </h1>
                 {contents}
             </div>
         );
@@ -148,9 +171,7 @@ export class EditVacationData extends Component {
         const parsedDateFrom = new Date(this.state.vacation.dateFrom);
         const parsedDateTo = new Date(this.state.vacation.dateTo);
         this.setState({ ...this.state, parsedFrom: parsedDateFrom });
-        this.setState({ ...this.state, parsedTo: parsedDateTo })
-        
-        
+        this.setState({ ...this.state, parsedTo: parsedDateTo })                
     }
 
 

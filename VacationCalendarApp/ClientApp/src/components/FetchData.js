@@ -1,16 +1,24 @@
 import React, { Component } from 'react';
 import authService from './api-authorization/AuthorizeService'
 
+import { RenderDays } from './RenderDays'
+
+//import Timeline from 'react-calendar-timeline'
+//import moment from 'moment'
+
+//import FullCalendar from '@fullcalendar/react'
+//import dayGridPlugin from '@fullcalendar/daygrid'
+//import listPlugin from '@fullcalendar/list'
+
+
 export class FetchData extends Component {
   static displayName = FetchData.name;
 
   constructor(props) {
-    super(props);
-      this.state = { forecasts: [], loading: true,  };
+    super(props);     
   }
 
   componentDidMount() {
-    this.populateWeatherData();
   }
 
   static renderForecastsTable(forecasts) {
@@ -39,25 +47,17 @@ export class FetchData extends Component {
   }
 
   render() {
-    let contents = this.state.loading
-      ? <p><em>Loading...</em></p>
-      : FetchData.renderForecastsTable(this.state.forecasts);
-
+    //let contents = this.state.loading
+    //  ? <p><em>Loading...</em></p>
+    //  : FetchData.renderForecastsTable(this.state.forecasts);
+      
     return (
       <div>
-        <h1 id="tabelLabel" >Weather forecast</h1>
-        <p>This component demonstrates fetching data from the server.</p>
-        {contents}
+            <h1 id="tabelLabel" >Vacations</h1>
+            <RenderDays />
       </div>
     );
   }
 
-  async populateWeatherData() {
-      const token = await authService.getAccessToken();      
-    const response = await fetch('weatherforecast', {
-      headers: !token ? {} : { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await response.json();
-    this.setState({ forecasts: data, loading: false });
-  }
+
 }

@@ -30,7 +30,33 @@ namespace VacationCalendarApp.Dto
         public string UserName { get; set; }
 
         public List<VacationTypeChoice> VacationTypeChoices { get; set; }
+
     }
+
+    public class EmployeeVacationData
+    {
+        public int EmployeeId { get; set; }
+       
+        public string EmployeeFirstName { get; set; }
+
+        public string EmployeeLastName { get; set; }
+
+        public string EmployeeFullName => $"{EmployeeFirstName} {EmployeeLastName}";
+
+        public string UserName { get; set; }
+
+        public List<VacationDto> Vacations { get; set; }
+    }
+
+    public class VacationDto
+    {
+        public int Id { get; set; }
+        public DateTime DateFrom { get; set; }
+        public DateTime DateTo { get; set; }
+
+        public string VacationType { get; set; }
+    }
+
 
     public class VacationTypeChoice
     {

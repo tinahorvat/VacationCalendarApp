@@ -64,9 +64,7 @@ export class FetchVacationsData extends Component {
                                             <NavLink tag={Link} className="text-dark" to={`edit-vacation-data/${vacation.id}`}>Edit/delete this vacation{vacation.id}</NavLink>
                                             </div>
                                     )}
-                                />
-                                    
-                                
+                                />                                                                    
                                 </td>
                             <td>{vacation.dateFrom}</td>
                             <td>{vacation.dateTo}</td>                            

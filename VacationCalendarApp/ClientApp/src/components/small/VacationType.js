@@ -17,8 +17,7 @@ export class VacationType extends React.Component {
     render() {
         return (  
                 <label> Pick vacation type: 
-                <select name={this.props.name} value={this.props.selected} onChange={this.handleChange}> {
-                    }
+                <select name={this.props.name} value={this.props.selected} onChange={this.handleChange}> 
                     {
                         this.props.vacationTypeChoices.map((v) =>
                             <option key={v.value} value={v.value} >{v.text}</option>)

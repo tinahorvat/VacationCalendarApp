@@ -31,6 +31,7 @@ namespace VacationCalendarApp.Dto
 
         public List<VacationTypeChoice> VacationTypeChoices { get; set; }
 
+        public byte[] rowVersion { get; set; }
     }
 
     public class EmployeeVacationData

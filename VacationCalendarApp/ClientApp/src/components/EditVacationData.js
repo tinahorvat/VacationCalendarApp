@@ -1,8 +1,9 @@
 ﻿import React, { Component } from 'react';
 import authService from './api-authorization/AuthorizeService'
 import { VacationType } from './small/VacationType'
-import DatePicker from "react-datepicker";
+import AccessAllowed from "./_helpers/AccessAllowed";
 
+import DatePicker from "react-datepicker";
 
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -18,7 +19,7 @@ export class EditVacationData extends Component {
                
             }, loading: true,
             errorMessage: null,
-            userRole: null,
+            user: { role: null, id: null },  
             parsedFrom: null,
             parsedTo: null
         };
@@ -107,30 +108,56 @@ export class EditVacationData extends Component {
 
     renderVacationForm(vacation, parsedFrom, parsedTo) {
         return (
-            <div className="formContainer">
+            <div>
                 <form onSubmit={(e) => this.handleFormSubmit(e)}>
-                    <div className="row">
-                        <label className="col-50" htmlFor="employee">Employee</label>
-                        <input type="text" name="employee" defaultValue={vacation.employeeFullName} />
+                    <div className="form-group">                    
+                        <label  htmlFor="employee">Employee</label>
+                        <input  type="text" name="employee" defaultValue={vacation.employeeFullName} />
                     </div>
-                    <div className="row">
-                        <label className="col-50" htmlFor="dateFrom">Date from</label>                        
-                        <DatePicker dateFormat="yyyy/MM/dd" selected={parsedFrom} onChange={this.handleDateFromChange} />
+                    <div className="form-group">
+                        <label htmlFor="dateFrom">Date from</label>                        
+                        <DatePicker  name="dateFrom" dateFormat="yyyy/MM/dd" selected={parsedFrom} onChange={this.handleDateFromChange} />
                     </div>
-                    <div className="row">
-                        <label className="col-50" htmlFor="dateTo">Date to</label>
+                    <div className="form-group">
+                        <label  htmlFor="dateTo">Date to</label>
                         <DatePicker dateFormat="yyyy/MM/dd" selected={parsedTo} onChange={this.handleDateToChange} />
                     </div>                    
-                    <div className="row">
+                    <div className="form-group">
                         <VacationType name="vacationType" selected={vacation.vacationType} vacationTypeChoices={vacation.vacationTypeChoices} onOptionChange={this.handleInputChange} />
                     </div>
-                    <div className="row">
-                        <input type="submit" value="Submit vacation" />
-                    </div>
+                    <AccessAllowed
+                        role={this.state.user.role}
+                        perform="vacations:edit"
+                        data={{
+                            userId: this.state.user.id,
+                            vacationOwnerId: this.state.vacation.userName
+                        }}
+                        yes={() => (
+                            <div className="form-group">
+                                <input type="submit" value="Submit vacation" />
+                            </div> 
+                        )}
+                    /> 
+                                       
                 </form>
-                <button type="button" onClick={this.HandleDeleteAction}>
-                    Delete
-          </button>
+                <div className="form-group">
+                    <AccessAllowed
+                        role={this.state.user.role}
+                        perform="vacations:delete"
+                        data={{
+                            userId: this.state.user.id,
+                            vacationOwnerId: this.state.vacation.userName
+                        }}
+                        yes={() => (
+                            <div>
+                                <button type="button" onClick={this.HandleDeleteAction}>
+                                    Delete
+                            </button>
+                            </div>
+                        )}
+                    />                
+                </div>
+                
             </div>
         );
     }
@@ -152,8 +179,15 @@ export class EditVacationData extends Component {
     async populateVacationData() {
         const token = await authService.getAccessToken();  
         const user = await authService.getUser();
-        var role = user.role;
-        this.setState({ userRole : role });
+        const role = user.role;
+        const userId = user.name;
+        if (role == null) { this.setState({ user: { id: null, role: 'Anonymous' } }) }
+        else {
+            if (role.includes("Admin", 0)) {
+                this.setState({ user: { id: userId, role: 'Admin' } })
+            }
+            else { this.setState({ user: { id: userId, role: 'Employee' } }) }
+        }
         await fetch('api/vacations/' + this.state.vacationId, {
             headers: !token ? {} : { 'Authorization': `Bearer ${token}` }
         })
@@ -166,7 +200,11 @@ export class EditVacationData extends Component {
             }
             })
             .then(data => this.setState({ vacation: data || [], loading: false }))
-            .catch(error => this.setState({ errorMessage: error, loading: false }));   
+            .catch(error => {
+                this.setState({ errorMessage: error, loading: false })
+
+                }
+            );   
 
         const parsedDateFrom = new Date(this.state.vacation.dateFrom);
         const parsedDateTo = new Date(this.state.vacation.dateTo);

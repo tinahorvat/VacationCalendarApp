@@ -18,7 +18,9 @@ using System.IdentityModel.Tokens.Jwt;
 using IdentityModel;
 using System.Linq;
 using AutoMapper;
-
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
+using VacationCalendarApp.Authorization;
 
 namespace VacationCalendarApp
 {
@@ -38,20 +40,11 @@ namespace VacationCalendarApp
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
 
-            //services.Configure<IdentityOptions>(options =>
-            //{
-            //    options.ClaimsIdentity.RoleClaimType = JwtClaimTypes.Role;
-                
-            //});
-
             services.AddIdentity<ApplicationUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = false)
                 .AddDefaultUI()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
-
                 .AddDefaultTokenProviders();
-
             
-
             services.AddIdentityServer()
                 .AddApiAuthorization<ApplicationUser, ApplicationDbContext>(options => {
                     options.IdentityResources["openid"].UserClaims.Add("role");
@@ -59,52 +52,22 @@ namespace VacationCalendarApp
                 });
             //JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Remove("role");
 
+            services.AddScoped<IAuthorizationHandler,
+                          UserIsOwnerAuthorizationHandler>();
+
+            services.AddSingleton<IAuthorizationHandler,
+                                  AdministratorAuthorizationHandler>();
+
             services.AddAuthorization()
                 .AddAuthentication()
                 .AddIdentityServerJwt()
                 .AddJwtBearer();
 
-            //services.AddAuthentication(o =>
-            //    {
-            //        o.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            //    })
-            //    .AddJwtBearer(o =>
-            //    {
-            //        //Additional config snipped
-            //        o.Events = new JwtBearerEvents
-            //        {
-            //            OnTokenValidated = async ctx =>
-            //            {
-            //                //Get the calling app client id that came from the token produced by Azure AD
-            //                string clientId = ctx.Principal.FindFirstValue("appid");
-
-            //                //Add claim if yes
-            //                var claims = new List<Claim> { new Claim("IsAdmin  ", "true") };
-            //                var appIdentity = new ClaimsIdentity(claims);
-
-            //                ctx.Principal.AddIdentity(appIdentity);
-
-            //            }
-            //        };
-            //    }).AddIdentityServerJwt();
-
-
-            //services.AddAuthorization(options =>
-            //    options.AddPolicy("Admin", policy =>
-            //    policy.RequireAuthenticatedUser()
-            //    .RequireClaim("role", "Admin")));
-
-            //services.AddHttpContextAccessor();
-            //var mapperConfig = new MapperConfiguration(mc =>
-            //{
-            //    mc.AddProfile(new MappingProfile());
-            //});
-
             //IMapper mapper = mapperConfig.CreateMapper();
             //services.AddSingleton(mapper);
 
             services.AddControllersWithViews();
-            services.AddRazorPages();
+            services.AddRazorPages();            
 
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration =>

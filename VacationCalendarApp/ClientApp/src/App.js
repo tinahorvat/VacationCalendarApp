@@ -6,7 +6,6 @@ import { FetchData } from './components/FetchData';
 import { FetchVacationsData } from './components/FetchVacationsData';
 import { EditVacationData } from './components/EditVacationData';
 import { CreateVacationData } from './components/CreateVacationData';
-import { Counter } from './components/Counter';
 import AuthorizeRoute from './components/api-authorization/AuthorizeRoute';
 import ApiAuthorizationRoutes from './components/api-authorization/ApiAuthorizationRoutes';
 import { ApplicationPaths } from './components/api-authorization/ApiAuthorizationConstants';
@@ -19,9 +18,8 @@ export default class App extends Component {
   render () {
     return (
       <Layout>
-        <Route exact path='/' component={Home} />
-        <Route path='/counter' component={Counter} />
-        <AuthorizeRoute path='/fetch-data' component={FetchData} />
+        <Route exact path='/' component={Home} />        
+        <Route path='/fetch-data' component={FetchData} />
         <AuthorizeRoute path='/fetch-vacations-data' component={FetchVacationsData} />
         <AuthorizeRoute path='/edit-vacation-data/:id' component={EditVacationData} />
         <AuthorizeRoute path='/create-vacation-data/:id' component={CreateVacationData} />
